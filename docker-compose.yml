@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    container_name: chem-compat-review
+    ports:
+      - "8000:8000"
+    volumes:
+      - chem-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  chem-data:

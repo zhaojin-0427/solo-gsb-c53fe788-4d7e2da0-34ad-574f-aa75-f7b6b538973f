@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实验室化学品相容性审查台</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>🧪 实验室化学品相容性审查台</h1>
+  <nav>
+    <button data-tab="chemicals" class="active">化学品</button>
+    <button data-tab="zones">储存分区</button>
+    <button data-tab="events">事件登记</button>
+    <button data-tab="rules">规则管理</button>
+    <button data-tab="review">相容性审查</button>
+  </nav>
+</header>
+<main>
+  <!-- 化学品 -->
+  <section id="tab-chemicals">
+    <div class="card">
+      <h2 id="chem-form-title">新增化学品</h2>
+      <form id="chem-form" class="grid-form">
+        <label>名称*<input id="chem-name" required></label>
+        <label>CAS 号<input id="chem-cas" placeholder="如 7647-01-0"></label>
+        <label>浓度 (%)<input id="chem-conc" type="number" step="any" min="0" max="100" placeholder="未知留空"></label>
+        <label>体积 (mL)<input id="chem-vol" type="number" step="any" min="0"></label>
+        <label>温度 (°C)<input id="chem-temp" type="number" step="any" placeholder="未知留空"></label>
+        <label>容器材质<select id="chem-material"></select></label>
+        <label>所在分区<select id="chem-zone"></select></label>
+        <fieldset class="tag-box"><legend>化学品标签</legend><div id="chem-tags"></div></fieldset>
+        <div class="form-actions">
+          <button type="submit" class="primary">保存</button>
+          <button type="button" id="chem-cancel" hidden>取消编辑</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>化学品清单</h2>
+      <table id="chem-table">
+        <thead><tr><th>ID</th><th>名称</th><th>CAS</th><th>标签</th><th>浓度%</th><th>体积mL</th><th>温度°C</th><th>材质</th><th>分区</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 分区 -->
+  <section id="tab-zones" hidden>
+    <div class="card">
+      <h2>新增分区</h2>
+      <form id="zone-form" class="grid-form">
+        <label>分区名称*<input id="zone-name" required></label>
+        <label>说明<input id="zone-desc"></label>
+        <div class="form-actions"><button type="submit" class="primary">保存</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>分区列表</h2>
+      <table id="zone-table">
+        <thead><tr><th>ID</th><th>名称</th><th>说明</th><th>化学品数</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 事件 -->
+  <section id="tab-events" hidden>
+    <div class="card">
+      <h2 id="event-form-title">登记事件</h2>
+      <form id="event-form" class="grid-form">
+        <label>事件类型
+          <select id="ev-type">
+            <option value="transfer">转移</option>
+            <option value="mix">混合</option>
+            <option value="dispose">废弃</option>
+          </select>
+        </label>
+        <label>化学品*<select id="ev-chem1"></select></label>
+        <label id="wrap-ev-chem2">混合对象<select id="ev-chem2"></select></label>
+        <label id="wrap-ev-target-zone">目标分区<select id="ev-target-zone"></select></label>
+        <label id="wrap-ev-target-material">目标容器材质<select id="ev-target-material"></select></label>
+        <label>数量 (mL)<input id="ev-qty" type="number" step="any" min="0"></label>
+        <label>计划时间<input id="ev-planned" type="datetime-local"></label>
+        <label>执行顺序号<input id="ev-seq" type="number" step="1" value="0"></label>
+        <label>备注<input id="ev-note"></label>
+        <div class="form-actions">
+          <button type="submit" class="primary">保存</button>
+          <button type="button" id="event-cancel" hidden>取消编辑</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>事件列表</h2>
+      <table id="event-table">
+        <thead><tr><th>ID</th><th>顺序</th><th>类型</th><th>化学品</th><th>细节</th><th>计划时间</th><th>状态</th><th>备注</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 规则 -->
+  <section id="tab-rules" hidden>
+    <div class="card">
+      <h2>规则版本</h2>
+      <div class="version-bar">
+        <select id="version-select"></select>
+        <span id="version-status"></span>
+        <button id="btn-activate">设为当前版本</button>
+        <button id="btn-seal" class="primary">封存当前版本并新建版本</button>
+      </div>
+      <p class="hint">当前版本可直接编辑；封存后版本不可修改，审查结果引用固定版本号，可随时复现。</p>
+    </div>
+    <div class="card" id="rule-edit-card">
+      <h2 id="rule-form-title">新增规则</h2>
+      <form id="rule-form" class="grid-form">
+        <label>规则名称*<input id="rule-name" required></label>
+        <label>类别
+          <select id="rule-category">
+            <option value="acid_base">酸碱</option>
+            <option value="redox">氧化还原</option>
+            <option value="gas">放气</option>
+            <option value="exotherm">放热</option>
+            <option value="corrosion">容器腐蚀</option>
+          </select>
+        </label>
+        <label>判定
+          <select id="rule-action">
+            <option value="forbid">禁止</option>
+            <option value="review">需人工复核</option>
+          </select>
+        </label>
+        <label>标签 A<select id="rule-tag-a"></select></label>
+        <label>标签 B<select id="rule-tag-b"></select></label>
+        <label>单化学品标签（腐蚀类）<select id="rule-tag-self"></select></label>
+        <label>浓度阈值 ≥ (%)<input id="rule-min-conc" type="number" step="any" placeholder="不限"></label>
+        <label>温度阈值 ≥ (°C)<input id="rule-min-temp" type="number" step="any" placeholder="不限"></label>
+        <fieldset class="tag-box"><legend>适用容器材质（腐蚀类）</legend><div id="rule-materials"></div></fieldset>
+        <fieldset class="tag-box"><legend>限定事件类型（不选=全部）</legend><div id="rule-event-types"></div></fieldset>
+        <label class="span-all">触发说明<input id="rule-message"></label>
+        <div class="form-actions">
+          <button type="submit" class="primary">保存规则</button>
+          <button type="button" id="rule-cancel" hidden>取消编辑</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>规则列表</h2>
+      <table id="rule-table">
+        <thead><tr><th>ID</th><th>类别</th><th>名称</th><th>判定</th><th>匹配条件</th><th>说明</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 审查 -->
+  <section id="tab-review" hidden>
+    <div class="card">
+      <h2>运行审查</h2>
+      <div class="version-bar">
+        <label>使用规则版本：<select id="review-version"></select></label>
+        <button id="btn-run-review" class="primary">运行审查</button>
+      </div>
+      <p class="hint">审查将逐项判定：各分区同区组合、各化学品容器、以及按顺序模拟每个待执行事件后的状态。结果连同规则快照一并保存，可复现。</p>
+    </div>
+    <div id="review-result"></div>
+    <div class="card">
+      <h2>历史审查记录</h2>
+      <table id="review-history">
+        <thead><tr><th>ID</th><th>规则版本</th><th>时间</th><th>禁止</th><th>需复核</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<div id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
